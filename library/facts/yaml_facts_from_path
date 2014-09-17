@@ -3,7 +3,7 @@
 DOCUMENTATION = '''
 ---
 module: yaml_facts_from_path
-short_description: Load facts from YAML files contained in a specified path.  
+short_description: Load facts from YAML files contained in a specified path.
 author: Herby Gillot <herby.gillot@axial.net>
 description:
     - This module recurses into the given path and locates any files with a
@@ -11,7 +11,7 @@ description:
     - The YAML content for each of these files is then loaded, and all
       variables or other data structure defined into these files are returned
       as Ansible facts.
-    - Each fact is named in a format that looks like 
+    - Each fact is named in a format that looks like
       <PATH_TO_FILE>_<FILE_NAME>_<VARIABLE_NAME>
 options:
     path:
@@ -37,6 +37,7 @@ import yaml
 
 YAML_EXT_REGEX = re.compile('\.ya?ml$', re.IGNORECASE)
 
+
 def check_path(path):
     '''
     Given a path, throw an exception if it doesn't exist, or isn't a directory.
@@ -51,11 +52,14 @@ def check_path(path):
 
 def collect_files_from_path(path, selection_function=None, onerror=None):
     '''
-    Given a path, walk all children and pass them to an optionally specified
-    selection function.  If the selection function returns true, the file
-    is appended to the results list this function returns.
+    Given a path, walk all children and pass each filename to an optionally
+    specified selection function.
+
+    Returns a list of all filenames for whom the selection_function returns
+    True.
 
     If no selection_function is specified, all files are returned.
+
     The onerror parameter is the same as expected by os.walk()
     '''
     if not selection_function:
@@ -68,7 +72,7 @@ def collect_files_from_path(path, selection_function=None, onerror=None):
         for filename in filenames:
             if selection_function(filename):
                 results.append(os.path.join(root, filename))
-            
+
     return results
 
 
@@ -124,17 +128,17 @@ def path_as_label(path):
     Any non-alphanumerical characters are converted into underscors, including
     path seperators.
     '''
-    label = re.sub( '[^\w\d]', '_', re.sub('\..*$', '', path))
+    label = re.sub('[^\w\d]', '_', re.sub('\..*$', '', path))
     return label
 
 
 def main():
 
     module = AnsibleModule(
-      argument_spec = dict(
-          path = dict(required=True),
-          ignore_invalid_yaml = dict(type='bool', default=False)
-      )
+        argument_spec=dict(
+            path=dict(required=True),
+            ignore_invalid_yaml=dict(type='bool', default=False)
+        )
     )
 
     path = module.params['path']
