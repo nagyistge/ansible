@@ -84,22 +84,22 @@ def has_yaml_extension(filename):
     return truth(re.search(YAML_EXT_REGEX, filename))
 
 
-def condensed_load_yaml_from_path(path, ignore_invalid_yaml=False):
+def recursive_load_yaml_from_path(path, ignore_invalid_yaml=False):
     '''
     Given a path, finds all YAML files contained in the path and loads all
     YAML content into a condensed results dictionary.
 
-    Each data structure in each YAML file will exist in the results dictionary
-    with the key <YAML_FILENAME_PATH_LABEL>_<STRUCTURE_NAME>
+    The dictionary is in the format {key: config} where key is a label formed
+    from the relative path of the configuration it was loaded from.
     '''
-    condensed_config = dict()
+    config = dict()
 
-    yaml_files = collect_files_from_path(path,
-            selection_function=has_yaml_extension)
+    yaml_files = collect_files_from_path(
+        path, selection_function=has_yaml_extension)
 
     for yaml_file in yaml_files:
         relative_path = yaml_file.replace(path + os.path.sep, '')
-        content_prefix = path_as_label(relative_path)
+        config_label = path_as_label(relative_path)
 
         with open(yaml_file, 'r') as handle:
             try:
@@ -111,12 +111,9 @@ def condensed_load_yaml_from_path(path, ignore_invalid_yaml=False):
         if not yaml_content:
             continue
 
-        for (structure_name, structure) in yaml_content.items():
-            label = ('{}_{}'.format(content_prefix, structure_name)).upper()
+        config[config_label] = yaml_content
 
-            condensed_config[label] = structure
-
-    return condensed_config
+    return config
 
 
 def path_as_label(path):
@@ -145,8 +142,8 @@ def main():
 
     try:
         check_path(path)
-        loaded_config = condensed_load_yaml_from_path(path,
-              ignore_invalid_yaml=module.params['ignore_invalid_yaml'])
+        loaded_config = recursive_load_yaml_from_path(
+            path, ignore_invalid_yaml=module.params['ignore_invalid_yaml'])
     except Exception, e:
         module.fail_json(msg=str(e))
 
