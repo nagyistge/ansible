@@ -413,6 +413,10 @@ class Ec2Inventory(object):
                     continue
                 self.ec2_instance_filters[filter_key].append(filter_value)
 
+        # Should we create tag=value groups?
+        self.tags_as_top_level_groups = config.getboolean(
+            'ec2', 'tags_as_top_level_groups')
+
     def parse_cli_args(self):
         ''' Command line argument processing '''
 
@@ -803,6 +807,12 @@ class Ec2Inventory(object):
                     if v:
                         self.push_group(
                             self.inventory, self.to_safe("tag_" + k), key)
+
+        # Inventory: Create top level tag groups
+        if self.tags_as_top_level_groups:
+            for k, v in instance.tags.items():
+                self.push_inventory(
+                    '{}={}'.format(k, v or ''), dest, parent_group='tags')
 
         # Inventory: Group by Route53 domain names if enabled
         if self.route53_enabled and self.group_by_route53_names:
